@@ -4,7 +4,6 @@ using System;
 using AngleSharp.Html.Parser;
 using System.Linq;
 using System.Collections;
-using StringTools;
 using System.Collections.Generic;
 
 namespace TestPoligon
@@ -16,20 +15,17 @@ namespace TestPoligon
             //базовый запрос
             var client = new RestClient(" https://api.market.mosreg.ru");
             var requestPageDelivery = new RestRequest("api/Trade/GetTradesForParticipantOrAnonymous", Method.POST);
-            requestPageDelivery.AddParameter("page",1);
-            requestPageDelivery.AddParameter("itemsPerPage", 10);
-            requestPageDelivery.AddParameter("id", 1763198);
+            requestPageDelivery.AddJsonBody(new requestPageDeliveryParams(1763198));
             var requestDocuments = new RestRequest("https://api.market.mosreg.ru/api/Trade/1763198/GetTradeDocuments");
-            var respBaseData = client.Execute<PageOfDeliveryJsonModel>(requestPageDelivery).Data;//json ответ
+            var respBaseData = client.Execute<PageOfDeliveryJsonModel>(requestPageDelivery);//json ответ
             var documents = client.Execute<List<DocumentJsonModel>>(requestDocuments);//json ответ
             //получение страницы извещения
-            var pageNotification = new RestClient("https://market.mosreg.ru/Trade/ViewTrade/1763198").Execute(
-                new RestRequest("")
+            var pageNotification = new RestClient("https://market.mosreg.ru/Trade/ViewTrade/1763198").Execute( new RestRequest("")
                 ,Method.GET);
 
             var document = new HtmlParser().ParseDocument(pageNotification.Content);
             //получение места доставки
-            var plaseOfDelivery =document.QuerySelectorAll(".informationAboutCustomer__informationPurchase-infoBlock").ToList().First(elem=>elem.FirstElementChild.InnerHtml== "Место поставки:").QuerySelector("p").InnerHtml;
+            var plaseOfDelivery =document.QuerySelectorAll(".informationAboutCustomer__informationPurchase-infoBlock").ToList().First(elem=>elem.FirstElementChild.TextContent== "Место поставки:").QuerySelector("p").TextContent;
             //получение данных о товарах
             var goods = document.QuerySelectorAll(".outputResults__oneResult");
 
@@ -43,6 +39,19 @@ namespace TestPoligon
                 var price = listFilds.First(elem => elem.FirstElementChild.InnerHtml.Contains("Стоимость единицы")).TextContent.Split(':')[1].Trim();
             }
 
+        }
+        public class requestPageDeliveryParams
+        {
+            public requestPageDeliveryParams(int id)
+            {
+                page = 1;
+                itemsPerPage = 10;
+                this.id = id;
+            }
+
+           public int page { get; set; }
+           public int itemsPerPage { get; set; }
+           public int id { get; set; }
         }
     }
 }
