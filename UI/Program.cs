@@ -51,10 +51,6 @@ namespace UI
             }
 
         }
-        private void CheckAndWrite(bool check,string trueMessage, string falseMessage)
-        {
-            Console.WriteLine(check?trueMessage:falseMessage);
-        }
 
     }
     class FormaterDataOfTenders
