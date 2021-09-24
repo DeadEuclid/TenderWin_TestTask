@@ -9,83 +9,122 @@ namespace Net
 {
     public class DataScraper
     {
-        public DataScraper(int tenderId)
-        {
-            this.tenderId = tenderId;
-        }
 
         public DataScraper()
         {
         }
 
-        public int tenderId { get; set; }
 
 
 
+        public bool TenderExist { get; private set; }
+        public bool NetIsWork { get; private set; }
+        public bool SelectorsOk = true;
 
+        private void AllSuccess()
+        {
+            TenderExist = true;
+            NetIsWork = true;
+        }
         public PageOfDeliveryJsonModel GetBaseFields(int tenderId)
 
         {
             //базовый запрос
             var client = new RestClient(" https://api.market.mosreg.ru");
             var requestPageDelivery = new RestRequest("api/Trade/GetTradesForParticipantOrAnonymous", Method.POST);
-            requestPageDelivery.AddJsonBody(new requestPageDeliveryParams(tenderId));
+            requestPageDelivery.AddJsonBody(new RequestPageDeliveryParams(tenderId));
             var respounse = client.Execute<PageOfDeliveryJsonModel>(requestPageDelivery);
-            if (respounse.Data.totalrecords==0)
+            if (respounse.Data.Totalrecords == 0)
             {
-                throw new ArgumentException("Тендера с данным номером не существует");
+                TenderExist = false;
+                return new PageOfDeliveryJsonModel();
             }
-
+            if (respounse.StatusCode != System.Net.HttpStatusCode.OK)
+            {
+                NetIsWork = false;
+                return new PageOfDeliveryJsonModel();
+            }
+            AllSuccess();
             return respounse.Data;
 
 
         }
         public AdditionData GetAdditionData(int tenderId)
         {
+            SelectorsOk = true;
             var client = new RestClient("https://market.mosreg.ru");
-            var request = new RestRequest("/Trade/ViewTrade/"+tenderId);
+            var request = new RestRequest("/Trade/ViewTrade/" + tenderId);
             var respounse = client.Execute(request);
-
+            string plaseOfDelivery;
+            var Lots = new List<Lot>();
             if (respounse.ResponseUri.ToString() == "https://market.mosreg.ru/Trade")
-                throw new ArgumentException("Тендера с данным номером не существует");
-
+            {
+                TenderExist = false;
+                return new AdditionData();
+            }
+            if (respounse.StatusCode != System.Net.HttpStatusCode.OK)
+            {
+                NetIsWork = false;
+                return new AdditionData();
+            }
             var pageNotification = new HtmlParser().ParseDocument(respounse.Content);
             //получение места доставки
-            var plaseOfDelivery = pageNotification.QuerySelectorAll(".informationAboutCustomer__informationPurchase-infoBlock").ToList().First(elem => elem.FirstElementChild.InnerHtml == "Место поставки:").QuerySelector("p").TextContent;
-            //получение данных о товарах
-            var ElementsLots = pageNotification.QuerySelectorAll(".outputResults__oneResult");
-            var Lots = new List<Lot>();
-            foreach (var lot in ElementsLots)
+            try
             {
-                var listFilds = lot.QuerySelectorAll("div [class$=parag]").ToList();
+                 plaseOfDelivery = pageNotification.QuerySelectorAll(".informationAboutCustomer__informationPurchase-infoBlock").ToList().First(elem => elem.FirstElementChild.InnerHtml == "Место поставки:").QuerySelector("p").TextContent;
+                //получение данных о товарах
+                var ElementsLots = pageNotification.QuerySelectorAll(".outputResults__oneResult");
+;
+                foreach (var lot in ElementsLots)
+                {
+                    var listFilds = lot.QuerySelectorAll("div [class$=parag]").ToList();
 
-                var name = getValueField("Наименование", listFilds);
-                var unit = getValueField("Единицы измерения", listFilds);
-                var count = getValueField("Количество", listFilds);
-                var price = getValueField("Стоимость единицы", listFilds);
+                    var name = GetValueField("Наименование", listFilds);
+                    var unit = GetValueField("Единицы измерения", listFilds);
+                    var count = GetValueField("Количество", listFilds);
+                    var price = GetValueField("Стоимость единицы", listFilds);
 
-                Lots.Add(new Lot(name, unit, count, price));
+                    Lots.Add(new Lot(name, unit, count, price));
+                }
             }
+            catch (Exception)
+            {
+                SelectorsOk = false;
+                return new AdditionData();
+            }
+
+            AllSuccess();
             return new AdditionData(plaseOfDelivery, Lots);
         }
-        private string getValueField(string elementAtribute, List<IElement> elements) =>
+        private string GetValueField(string elementAtribute, List<IElement> elements) =>
             elements.First(elem => elem.FirstElementChild.TextContent.Contains(elementAtribute)).TextContent.Split(':')[1].Trim();
         public List<DocumentJsonModel> GetDocuments(int tenderId)
         {
             var client = new RestClient("https://api.market.mosreg.ru/");
             var request = new RestRequest($"/api/Trade/{tenderId}/GetTradeDocuments");
-            var respounse=client.Execute<List<DocumentJsonModel>>(request);
-            if (respounse.Content.Contains("не найден")&&respounse.StatusCode==System.Net.HttpStatusCode.BadRequest)
-            {
-                throw new ArgumentException("Тендера с данным номером не существует");
-            }
+            var respounse = client.Execute<List<DocumentJsonModel>>(request);
 
+            if (respounse.Content.Contains("не найден") && respounse.StatusCode == System.Net.HttpStatusCode.BadRequest)
+            {
+                TenderExist = false;
+                return new List<DocumentJsonModel>();
+            }
+            if (respounse.StatusCode != System.Net.HttpStatusCode.OK)
+            {
+                NetIsWork = false;
+                return new List<DocumentJsonModel>();
+            }
+            AllSuccess();
             return respounse.Data;
         }
     }
 
     public class AdditionData
     {
+        public AdditionData()
+        {
+        }
+
         public AdditionData(string plaseOfDelivery, List<Lot> lots)
         {
             PlaseOfDelivery = plaseOfDelivery;
@@ -111,17 +150,17 @@ namespace Net
         public string Price { get; set; }
     }
 
-    public class requestPageDeliveryParams
+    public class RequestPageDeliveryParams
     {
-        public requestPageDeliveryParams(int tenderId)
+        public RequestPageDeliveryParams(int tenderId)
         {
-            page = 1;
-            itemsPerPage = 10;
-            this.id = tenderId;
+            Page = 1;
+            ItemsPerPage = 10;
+            this.Id = tenderId;
         }
 
-        public int page { get; set; }
-        public int itemsPerPage { get; set; }
-        public int id { get; set; }
+        public int Page { get; set; }
+        public int ItemsPerPage { get; set; }
+        public int Id { get; set; }
     }
 }

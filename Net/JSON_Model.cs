@@ -24,9 +24,9 @@ namespace Net
 
     public class PageOfDeliveryJsonModel
     {
-        public Invdata PageOfDelivery => invdata.First();
-        public int totalrecords { get; set; }
-        public List<Invdata> invdata { get; set; }
+        public Invdata PageOfDelivery => Invdata.First();
+        public int Totalrecords { get; set; }
+        public List<Invdata> Invdata { get; set; }
     }
     public class DocumentJsonModel
     {

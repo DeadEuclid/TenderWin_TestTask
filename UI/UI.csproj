@@ -7,7 +7,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Net\Net.csproj" />
-    <ProjectReference Include="..\TestPoligon\TestPoligon.csproj" />
   </ItemGroup>
 
 </Project>
