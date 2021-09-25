@@ -13,7 +13,7 @@ namespace Net
 
         public DataScraper()
         {
-            MarketClient= new RestClient("https://market.mosreg.ru");
+            MarketClient = new RestClient("https://market.mosreg.ru");
             ApiClient = new RestClient(" https://api.market.mosreg.ru");
         }
 
