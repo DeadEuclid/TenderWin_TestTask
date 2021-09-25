@@ -1,6 +1,8 @@
-﻿using Net;
+﻿using FluentResults;
+using Net;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 
 namespace UI
@@ -17,37 +19,24 @@ namespace UI
                 Console.WriteLine("Введите номер тендера:");
                 if (!int.TryParse(Console.ReadLine(), out int tenderNumber))
                 {
-                    Console.WriteLine("Номер тендера введён не корректно повторите попытку");
+                    Console.WriteLine("Номер тендера введён не корректно повторите попытку\n");
                     continue;
                 }
 
-                var baseFields = scraper.GetBaseFields(tenderNumber);
-                var additionData = scraper.GetAdditionData(tenderNumber);
-                var documents = scraper.GetDocuments(tenderNumber);
-                if (scraper.TenderExist)
+                var baseFieldsResult = scraper.GetBaseFields(tenderNumber);
+                if (baseFieldsResult.IsFailed)
                 {
-                    if (scraper.SelectorsOk)
-                    {
-                        if (scraper.NetIsWork)
-                        {
-                            Console.WriteLine(formater.FormatAllData(baseFields, additionData, documents));
-                        }
-                        else
-                        {
-                            Console.WriteLine("Возникли проблемы с сетью или сайтом.попробуйте позже");
-                        }
-                    }
-                    else
-                    {
-                        Console.WriteLine("Сайт изменился, попробуйте обратится к разработчику приложения");
-                    }
-
+                    Console.WriteLine(baseFieldsResult.Errors.First().Message);
+                    continue;
                 }
                 else
                 {
-                    Console.WriteLine("Тендера с данным номером не существует, попробуйте ещё раз");
+                var additionDataResult = scraper.GetAdditionData(tenderNumber);
+                var documentsResult = scraper.GetDocuments(tenderNumber);
+                    Console.WriteLine(formater.FormatAllResults(baseFieldsResult,additionDataResult,documentsResult));
                 }
 
+             
             }
 
         }
@@ -55,12 +44,39 @@ namespace UI
     }
     class FormaterDataOfTenders
     {
-        public string FormatAllData(PageOfDeliveryJsonModel pageOfDeliveryModel, AdditionData additionData, List<DocumentJsonModel> documents) =>
-            FormatBaseData(pageOfDeliveryModel) + FormatAditionData(additionData) + FormatDocumentsData(documents);
-        private string FormatBaseData(PageOfDeliveryJsonModel pageOfDeliveryModel)
+        public string FormatAllResults(Result<PageOfDeliveryJsonModel> pageOfDeliveryModel, Result<AdditionData> additionData, Result<List<DocumentJsonModel>> documents)
+        {
+            return string.Concat(FormatBaseData(pageOfDeliveryModel),FormatAditionData(additionData),FormatDocumentsData(documents));
+        }
+
+        private string FormatBaseData(Result<PageOfDeliveryJsonModel> pageOfDelivery)
+        {
+            if (pageOfDelivery.IsFailed)
+            {
+                return pageOfDelivery.Errors.First().Message + "\n";
+            }
+            else return FormatBaseData(pageOfDelivery.Value);
+        }
+        private string FormatAditionData(Result<AdditionData> additionalData)
+        {
+            if (additionalData.IsFailed)
+            {
+                return additionalData.Errors.First().Message+"\n";
+            }
+            else return FormatAditionData(additionalData.Value);
+        }
+        private string FormatDocumentsData(Result<List<DocumentJsonModel>> documents)
+        {
+            if (documents.IsFailed)
+            {
+                return documents.Errors.First().Message + "\n";
+            }
+            else return FormatDocumentsData(documents.Value);
+        }
+        private string FormatBaseData(PageOfDeliveryJsonModel pageOfDeliveryJson)
         {
 
-            var pageOfDelivery = pageOfDeliveryModel.PageOfDelivery;
+            var pageOfDelivery = pageOfDeliveryJson.PageOfDelivery;
             var startMaxPrice = pageOfDelivery.IsInitialPriceDefined ? pageOfDelivery.InitialPrice.ToString() : "Начальная максимальная цена не назначена";
             return $"Номер тендера: {pageOfDelivery.Id}\n" +
                 $"Наименование тендера: {pageOfDelivery.TradeName}\n" +
@@ -94,6 +110,7 @@ namespace UI
             return result.ToString();
 
         }
+
     }
 
 }
