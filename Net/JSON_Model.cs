@@ -9,7 +9,7 @@ namespace Net
     {
 
 
-        public int TradeState { get; set; }
+        public string TradeStateName { get; set; }
         public string TradeName { get; set; }
         public int Id { get; set; }
         public string CustomerFullName { get; set; }
@@ -29,7 +29,7 @@ namespace Net
             var startMaxPrice = PageOfDelivery.IsInitialPriceDefined ? PageOfDelivery.InitialPrice.ToString() : "Начальная максимальная цена не назначена";
             return $"Номер тендера: {PageOfDelivery.Id}\n" +
                 $"Наименование тендера: {PageOfDelivery.TradeName}\n" +
-                $"Текущий статус: {PageOfDelivery.TradeState}\n" +
+                $"Текущий статус: {PageOfDelivery.TradeStateName}\n" +
                 $" Наименование заказчика: {PageOfDelivery.CustomerFullName}\n" +
                 $" Начальная максимальная цена: {startMaxPrice}\n" +
                 $" Дата публикации: {PageOfDelivery.PublicationDateUTC7}\n";
