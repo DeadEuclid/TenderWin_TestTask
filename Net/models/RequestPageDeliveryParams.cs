@@ -6,7 +6,7 @@
         {
             Page = 1;
             ItemsPerPage = 10;
-            this.Id = tenderId;
+            Id = tenderId;
         }
 
         public int Page { get; set; }

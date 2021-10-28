@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 
 namespace Net
 {
@@ -16,9 +15,9 @@ namespace Net
         public bool IsInitialPriceDefined { get; set; }
         public double InitialPrice { get; set; }
         public DateTime FillingApplicationEndDate { get; set; }
-        public DateTime FillingApplicationEndDateUTC7 { get => FillingApplicationEndDate.AddHours(7); }
+        public DateTime FillingApplicationEndDateUTC7 => FillingApplicationEndDate.AddHours(7);
         public DateTime PublicationDate { get; set; }
-        public DateTime PublicationDateUTC7 { get => PublicationDate.AddHours(7); }
+        public DateTime PublicationDateUTC7 => PublicationDate.AddHours(7);
 
     }
 

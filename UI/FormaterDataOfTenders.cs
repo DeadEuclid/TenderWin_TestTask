@@ -27,7 +27,10 @@ namespace UI
             }
             return "Неизвестная ошибка";
         }
-        private string ErrorsWrap<T>(Result<T> result) => ErrorsWrap(result, x => x.ToString());
+        private string ErrorsWrap<T>(Result<T> result)
+        {
+            return ErrorsWrap(result, x => x.ToString());
+        }
 
         private string FormatDocumentsData(List<DocumentJsonModel> documents)
         {

@@ -89,8 +89,11 @@ namespace Net
             }
             return Result.Ok(new AdditionData(plaseOfDelivery, Lots));
         }
-        private string GetValueField(string elementAtribute, List<IElement> elements) =>
-            elements.First(elem => elem.FirstElementChild.TextContent.Contains(elementAtribute)).TextContent.Split(':')[1].Trim();
+        private string GetValueField(string elementAtribute, List<IElement> elements)
+        {
+            return elements.First(elem => elem.FirstElementChild.TextContent.Contains(elementAtribute)).TextContent.Split(':')[1].Trim();
+        }
+
         public Result<List<DocumentJsonModel>> GetDocuments(int tenderId)
         {
             var request = new RestRequest($"/api/Trade/{tenderId}/GetTradeDocuments");
